@@ -1,16 +1,16 @@
 # @msgine/sdk
 
-Official TypeScript SDK for the MsGine SMS API. A fully typed, production-ready client with built-in retry logic, error handling, and comprehensive validation.
+Official TypeScript SDK for the MsGine Messaging API. 
 
 ## Features
 
-- 🎯 **Fully Typed**: Complete TypeScript support with strict typing
-- 🔄 **Auto Retry**: Configurable retry logic with exponential backoff
-- ✅ **Validation**: Runtime validation using Zod schemas
-- 🚀 **Modern**: Built with latest TypeScript and ES modules
-- 🧪 **Well Tested**: Comprehensive test coverage
-- 📦 **Zero Config**: Sensible defaults, easy to customize
-- 🔌 **Flexible**: Support for custom fetch implementations
+- **Fully Typed**: Complete TypeScript support with strict typing
+- **Auto Retry**: Configurable retry logic with exponential backoff
+- **Validation**: Runtime validation using Zod schemas
+- **Modern**: Built with latest TypeScript and ES modules
+- **Well Tested**: Comprehensive test coverage
+- **Zero Config**: Sensible defaults, easy to customize
+- **Flexible**: Support for custom fetch implementations
 
 ## Installation
 
@@ -41,7 +41,7 @@ const result = await client.sendSms({
   message: 'Hello from MsGine!',
 });
 
-console.log('Message sent:', result.messageId);
+console.log('Message sent:', result.id);
 console.log('Status:', result.status);
 ```
 
@@ -83,10 +83,11 @@ try {
     message: 'Your verification code is 123456',
   });
 
-  console.log('Message ID:', result.messageId);
+  console.log('Message ID:', result.id);
   console.log('Status:', result.status);
-  console.log('Sent to:', result.to);
-  console.log('Timestamp:', result.timestamp);
+  console.log('Recipients:', result.to);
+  console.log('Cost:', result.cost, result.currency);
+  console.log('Timestamp:', result.createdAt);
 } catch (error) {
   if (error instanceof MsGineError) {
     console.error('API Error:', error.message);
@@ -109,7 +110,7 @@ try {
   const results = await client.sendSmsBatch(messages);
   
   results.forEach((result, index) => {
-    console.log(`Message ${index + 1}:`, result.messageId);
+    console.log(`Message ${index + 1}:`, result.id);
   });
 } catch (error) {
   console.error('Failed to send batch:', error);
@@ -274,11 +275,17 @@ interface SendSmsPayload {
 
 ```typescript
 interface SendSmsResponse {
-  success: boolean;
-  messageId: string;
+  id: string;
+  sid: string | null;
+  channel: string;
+  to: string[];
+  from: string;
+  content: string;
   status: MessageStatus;
-  to: string;
-  timestamp: string;
+  cost: number;
+  currency: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 ```
 
@@ -404,6 +411,6 @@ MIT
 ## Support
 
 For issues and questions:
-- GitHub Issues: [github.com/yourorg/msgine-sdk](https://github.com/yourorg/msgine-sdk)
+- GitHub Issues: [github.com/kasimlyee/msgine-sdk](https://github.com/kasimlyee/msgine-sdk)
 - Documentation: [docs.msgine.net](https://docs.msgine.net)
 - Email: support@msgine.net

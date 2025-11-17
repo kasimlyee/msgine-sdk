@@ -87,6 +87,7 @@ export type SendSmsPayload = z.infer<typeof SendSmsSchema>;
 export enum MessageStatus {
   PENDING = 'pending',
   SENT = 'sent',
+  DELIVERED = 'delivered',
   FAILED = 'failed',
 }
 
@@ -94,11 +95,17 @@ export enum MessageStatus {
  * Response from sending an SMS
  */
 export interface SendSmsResponse {
-  success: boolean;
-  messageId: string;
+  id: string;
+  sid: string | null;
+  channel: string;
+  to: string[];
+  from: string;
+  content: string;
   status: MessageStatus;
-  to: string;
-  timestamp: string;
+  cost: number;
+  currency: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 
 /**

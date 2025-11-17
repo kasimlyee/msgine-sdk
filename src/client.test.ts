@@ -18,11 +18,16 @@ describe('MsGineClient', () => {
   describe('sendSms', () => {
     it('should send SMS successfully', async () => {
       const mockResponse = {
-        success: true,
-        messageId: 'msg_123',
+        id: '08356d39-3b8d-4ace-afe3-bf497e716d3e',
+        sid: null,
+        channel: 'sms',
+        to: ['+256701521269'],
+        from: 'MsGine',
+        content: 'Hello from MsGine!',
         status: 'pending',
-        to: '+256701521269',
-        timestamp: '2024-01-01T00:00:00Z',
+        cost: 30,
+        currency: 'UGX',
+        createdAt: '2024-01-01T00:00:00Z',
       };
 
       mockFetch.mockResolvedValueOnce({
@@ -194,11 +199,16 @@ describe('MsGineClient', () => {
           status: 200,
           headers: new Headers({ 'content-type': 'application/json' }),
           json: async () => ({
-            success: true,
-            messageId: 'msg_123',
+            id: 'msg_123',
+            sid: null,
+            channel: 'sms',
+            to: ['+256701521269'],
+            from: 'MsGine',
+            content: 'Hello',
             status: 'pending',
-            to: '+256701521269',
-            timestamp: '2024-01-01T00:00:00Z',
+            cost: 30,
+            currency: 'UGX',
+            createdAt: '2024-01-01T00:00:00Z',
           }),
         });
 
@@ -216,7 +226,8 @@ describe('MsGineClient', () => {
         message: 'Hello',
       });
 
-      expect(result.success).toBe(true);
+      expect(result.id).toBe('msg_123');
+      expect(result.status).toBe('pending');
       expect(mockFetch).toHaveBeenCalledTimes(3);
     });
   });
@@ -224,19 +235,29 @@ describe('MsGineClient', () => {
   describe('sendSmsBatch', () => {
     it('should send multiple SMS messages', async () => {
       const mockResponse1 = {
-        success: true,
-        messageId: 'msg_1',
+        id: 'msg_1',
+        sid: null,
+        channel: 'sms',
+        to: ['+256701521269'],
+        from: 'MsGine',
+        content: 'Hello 1',
         status: 'pending',
-        to: '+256701521269',
-        timestamp: '2024-01-01T00:00:00Z',
+        cost: 30,
+        currency: 'UGX',
+        createdAt: '2024-01-01T00:00:00Z',
       };
 
       const mockResponse2 = {
-        success: true,
-        messageId: 'msg_2',
+        id: 'msg_2',
+        sid: null,
+        channel: 'sms',
+        to: ['+256701521270'],
+        from: 'MsGine',
+        content: 'Hello 2',
         status: 'pending',
-        to: '+256701521270',
-        timestamp: '2024-01-01T00:00:00Z',
+        cost: 30,
+        currency: 'UGX',
+        createdAt: '2024-01-01T00:00:00Z',
       };
 
       mockFetch
