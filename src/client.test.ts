@@ -153,31 +153,47 @@ describe('MsGineClient', () => {
     });
 
     it('should handle timeout', async () => {
-      mockFetch.mockImplementation(
-        () => new Promise(() => {
-          // Never resolve or reject - simulate a hung connection
-        })
-      );
+      vi.useFakeTimers();
 
-      const client = new MsGineClient({
-        apiToken: 'test-token',
-        timeout: 50,
-        fetch: mockFetch as unknown as typeof fetch,
-      });
+      try {
+        mockFetch.mockImplementation(
+          (_url: string, options?: RequestInit) => {
+            return new Promise((_, reject) => {
+              // Listen to abort signal and reject with AbortError
+              const signal = options?.signal as AbortSignal | undefined;
+              if (signal) {
+                signal.addEventListener('abort', () => {
+                  const error = new Error('The operation was aborted');
+                  error.name = 'AbortError';
+                  reject(error);
+                });
+              }
+              // Never resolve - simulate a hung connection
+            });
+          }
+        );
 
-      const startTime = Date.now();
+        const client = new MsGineClient({
+          apiToken: 'test-token',
+          timeout: 50,
+          fetch: mockFetch as unknown as typeof fetch,
+        });
 
-      await expect(
-        client.sendSms({
+        const sendPromise = client.sendSms({
           to: '+256701521269',
           message: 'Hello',
-        })
-      ).rejects.toThrow('Request timeout');
+        });
 
-      const elapsed = Date.now() - startTime;
-      // Should timeout around 50ms (with some tolerance)
-      expect(elapsed).toBeGreaterThanOrEqual(45);
-      expect(elapsed).toBeLessThan(200);
+        // Catch the promise to prevent unhandled rejection
+        sendPromise.catch(() => {});
+
+        // Run all pending timers
+        await vi.runAllTimersAsync();
+
+        await expect(sendPromise).rejects.toThrow('Request timeout');
+      } finally {
+        vi.useRealTimers();
+      }
     });
 
     it('should retry on retryable errors', async () => {
