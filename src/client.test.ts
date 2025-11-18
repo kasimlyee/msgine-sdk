@@ -39,7 +39,7 @@ describe('MsGineClient', () => {
         ok: true,
         status: 200,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => mockResponse,
+        json: () => Promise.resolve(mockResponse),
       });
 
       const client = createClient();
@@ -156,22 +156,20 @@ describe('MsGineClient', () => {
       vi.useFakeTimers();
 
       try {
-        mockFetch.mockImplementation(
-          (_url: string, options?: RequestInit) => {
-            return new Promise((_, reject) => {
-              // Listen to abort signal and reject with AbortError
-              const signal = options?.signal as AbortSignal | undefined;
-              if (signal) {
-                signal.addEventListener('abort', () => {
-                  const error = new Error('The operation was aborted');
-                  error.name = 'AbortError';
-                  reject(error);
-                });
-              }
-              // Never resolve - simulate a hung connection
-            });
-          }
-        );
+        mockFetch.mockImplementation((_url: string, options?: RequestInit) => {
+          return new Promise((_, reject) => {
+            // Listen to abort signal and reject with AbortError
+            const signal = options?.signal as AbortSignal | undefined;
+            if (signal) {
+              signal.addEventListener('abort', () => {
+                const error = new Error('The operation was aborted');
+                error.name = 'AbortError';
+                reject(error);
+              });
+            }
+            // Never resolve - simulate a hung connection
+          });
+        });
 
         const client = new MsGineClient({
           apiToken: 'test-token',
@@ -294,13 +292,13 @@ describe('MsGineClient', () => {
           ok: true,
           status: 200,
           headers: new Headers({ 'content-type': 'application/json' }),
-          json: async () => mockResponse1,
+          json: () => Promise.resolve(mockResponse1),
         })
         .mockResolvedValueOnce({
           ok: true,
           status: 200,
           headers: new Headers({ 'content-type': 'application/json' }),
-          json: async () => mockResponse2,
+          json: () => Promise.resolve(mockResponse2),
         });
 
       const client = createClient();
@@ -343,13 +341,14 @@ describe('MsGineClient', () => {
         ok: true,
         status: 200,
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({
-          success: true,
-          messageId: 'msg_123',
-          status: 'pending',
-          to: '+256701521269',
-          timestamp: '2024-01-01T00:00:00Z',
-        }),
+        json: () =>
+          Promise.resolve({
+            success: true,
+            messageId: 'msg_123',
+            status: 'pending',
+            to: '+256701521269',
+            timestamp: '2024-01-01T00:00:00Z',
+          }),
       });
 
       const client = new MsGineClient({

@@ -10,13 +10,13 @@ import {
 
 /**
  * Main MsGine SDK client
- * 
+ *
  * @example
  * ```typescript
  * const client = new MsGineClient({
  *   apiToken: process.env.MSGINE_API_TOKEN!
  * });
- * 
+ *
  * const result = await client.sendSms({
  *   to: '+256701521269',
  *   message: 'Hello from MsGine!'
@@ -28,7 +28,7 @@ export class MsGineClient {
 
   /**
    * Create a new MsGine client
-   * 
+   *
    * @param config - Client configuration
    * @throws {Error} If API token is not provided
    */
@@ -38,19 +38,19 @@ export class MsGineClient {
 
   /**
    * Send an SMS message
-   * 
+   *
    * @param payload - SMS message data
    * @returns Promise resolving to the SMS response
    * @throws {MsGineValidationError} If payload validation fails
    * @throws {MsGineError} If the API request fails
-   * 
+   *
    * @example
    * ```typescript
    * const result = await client.sendSms({
    *   to: '+256701521269',
    *   message: 'Hello World!'
    * });
-   * 
+   *
    * console.log('Message ID:', result.messageId);
    * console.log('Status:', result.status);
    * ```
@@ -58,12 +58,9 @@ export class MsGineClient {
   async sendSms(payload: SendSmsPayload): Promise<SendSmsResponse> {
     // Validate payload
     const validation = SendSmsSchema.safeParse(payload);
-    
+
     if (!validation.success) {
-      throw new MsGineValidationError(
-        'Invalid SMS payload',
-        validation.error
-      );
+      throw new MsGineValidationError('Invalid SMS payload', validation.error);
     }
 
     // Send request
@@ -76,12 +73,12 @@ export class MsGineClient {
 
   /**
    * Send multiple SMS messages in batch
-   * 
+   *
    * @param payloads - Array of SMS message data
    * @returns Promise resolving to array of SMS responses
    * @throws {MsGineValidationError} If any payload validation fails
    * @throws {MsGineError} If any API request fails
-   * 
+   *
    * @example
    * ```typescript
    * const results = await client.sendSmsBatch([
@@ -90,9 +87,7 @@ export class MsGineClient {
    * ]);
    * ```
    */
-  async sendSmsBatch(
-    payloads: SendSmsPayload[]
-  ): Promise<SendSmsResponse[]> {
+  async sendSmsBatch(payloads: SendSmsPayload[]): Promise<SendSmsResponse[]> {
     // Validate all payloads first
     const validations = payloads.map((payload) =>
       SendSmsSchema.safeParse(payload)
@@ -107,18 +102,16 @@ export class MsGineClient {
     }
 
     // Send all messages
-    return Promise.all(
-      payloads.map((payload) => this.sendSms(payload))
-    );
+    return Promise.all(payloads.map((payload) => this.sendSms(payload)));
   }
 }
 
 /**
  * Create a new MsGine client instance
- * 
+ *
  * @param config - Client configuration
  * @returns New MsGine client instance
- * 
+ *
  * @example
  * ```typescript
  * const client = createClient({

@@ -17,6 +17,19 @@ const DEFAULT_RETRY_CONFIG: Required<RetryConfig> = {
   retryableStatusCodes: [408, 429, 500, 502, 503, 504],
 };
 
+/**
+ * Structure of error response from the API
+ */
+interface ApiErrorResponse {
+  error?: {
+    code?: string;
+    message?: string;
+    details?: Record<string, unknown>;
+  };
+  meta?: {
+    requestId?: string;
+  };
+}
 
 export class FetchHttpClient implements HttpClient {
   private readonly baseUrl: string;
@@ -76,7 +89,6 @@ export class FetchHttpClient implements HttpClient {
           this.retryConfig.maxDelay
         );
 
-        
         await this.sleep(delay);
         attempt++;
       }
@@ -175,7 +187,7 @@ export class FetchHttpClient implements HttpClient {
 
     if (isJson) {
       try {
-        const errorData: any = await response.json();
+        const errorData = (await response.json()) as ApiErrorResponse;
         errorMessage = errorData.error?.message ?? errorMessage;
         errorCode = errorData.error?.code;
         errorDetails = errorData.error?.details;
@@ -205,7 +217,9 @@ export class FetchHttpClient implements HttpClient {
     const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
 
     // Ensure base URL ends with '/' for proper concatenation
-    const baseUrl = this.baseUrl.endsWith('/') ? this.baseUrl : `${this.baseUrl}/`;
+    const baseUrl = this.baseUrl.endsWith('/')
+      ? this.baseUrl
+      : `${this.baseUrl}/`;
 
     const url = new URL(normalizedPath, baseUrl);
 

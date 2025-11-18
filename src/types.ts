@@ -73,7 +73,10 @@ export interface RetryConfig {
  */
 export const SendSmsSchema = z.object({
   to: z.string().min(1, 'Phone number is required'),
-  message: z.string().min(1, 'Message is required').max(1600, 'Message too long'),
+  message: z
+    .string()
+    .min(1, 'Message is required')
+    .max(1600, 'Message too long'),
 });
 
 /**

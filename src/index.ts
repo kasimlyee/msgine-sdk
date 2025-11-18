@@ -1,6 +1,6 @@
 /**
  * MsGine SDK - Official TypeScript SDK for MsGine Messaging API
- * 
+ *
  * @packageDocumentation
  */
 
