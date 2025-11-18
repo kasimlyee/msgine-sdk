@@ -1,7 +1,8 @@
 # @msgine/sdk
 
-Official TypeScript SDK for the MsGine Messaging API. 
 ![npm](https://img.shields.io/npm/v/@msgine/sdk?color=brightgreen&label=npm)
+
+Official TypeScript SDK for the MsGine Messaging API. 
 
 ## Features
 
