@@ -112,6 +112,11 @@ export class FetchHttpClient implements HttpClient {
     } catch (error) {
       clearTimeout(timeoutId);
 
+      // If it's already a MsGineError, just re-throw it
+      if (error instanceof MsGineError) {
+        throw error;
+      }
+
       // Handle timeout
       if (error instanceof Error && error.name === 'AbortError') {
         throw new MsGineError(
@@ -196,7 +201,13 @@ export class FetchHttpClient implements HttpClient {
     path: string,
     queryParams?: Record<string, string | number | boolean>
   ): string {
-    const url = new URL(path, this.baseUrl);
+    // Remove leading slash from path if present to avoid replacing base URL path
+    const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+
+    // Ensure base URL ends with '/' for proper concatenation
+    const baseUrl = this.baseUrl.endsWith('/') ? this.baseUrl : `${this.baseUrl}/`;
+
+    const url = new URL(normalizedPath, baseUrl);
 
     if (queryParams) {
       Object.entries(queryParams).forEach(([key, value]) => {

@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MsGineClient, MsGineError, MsGineValidationError } from '../src';
 
 describe('MsGineClient', () => {
@@ -6,6 +6,11 @@ describe('MsGineClient', () => {
 
   beforeEach(() => {
     mockFetch = vi.fn();
+    vi.clearAllTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   const createClient = () => {
@@ -93,18 +98,24 @@ describe('MsGineClient', () => {
     });
 
     it('should handle API errors', async () => {
-      mockFetch.mockResolvedValueOnce({
+      // Create separate response objects since json() can only be called once per response
+      const createMockErrorResponse = () => ({
         ok: false,
         status: 401,
         statusText: 'Unauthorized',
         headers: new Headers({ 'content-type': 'application/json' }),
-        json: async () => ({
+        json: vi.fn().mockResolvedValue({
           error: {
             code: 'UNAUTHORIZED',
             message: 'Invalid API token',
           },
         }),
       });
+
+      // Mock the response twice since the test calls sendSms twice
+      mockFetch
+        .mockResolvedValueOnce(createMockErrorResponse())
+        .mockResolvedValueOnce(createMockErrorResponse());
 
       const client = createClient();
 
@@ -143,14 +154,9 @@ describe('MsGineClient', () => {
 
     it('should handle timeout', async () => {
       mockFetch.mockImplementation(
-        () =>
-          new Promise((_, reject) => {
-            setTimeout(() => {
-              const error = new Error('Aborted');
-              error.name = 'AbortError';
-              reject(error);
-            }, 100);
-          })
+        () => new Promise(() => {
+          // Never resolve or reject - simulate a hung connection
+        })
       );
 
       const client = new MsGineClient({
@@ -159,12 +165,19 @@ describe('MsGineClient', () => {
         fetch: mockFetch as unknown as typeof fetch,
       });
 
+      const startTime = Date.now();
+
       await expect(
         client.sendSms({
           to: '+256701521269',
           message: 'Hello',
         })
       ).rejects.toThrow('Request timeout');
+
+      const elapsed = Date.now() - startTime;
+      // Should timeout around 50ms (with some tolerance)
+      expect(elapsed).toBeGreaterThanOrEqual(45);
+      expect(elapsed).toBeLessThan(200);
     });
 
     it('should retry on retryable errors', async () => {
@@ -175,7 +188,7 @@ describe('MsGineClient', () => {
           status: 503,
           statusText: 'Service Unavailable',
           headers: new Headers({ 'content-type': 'application/json' }),
-          json: async () => ({
+          json: vi.fn().mockResolvedValue({
             error: {
               code: 'SERVICE_UNAVAILABLE',
               message: 'Service temporarily unavailable',
@@ -187,7 +200,7 @@ describe('MsGineClient', () => {
           status: 503,
           statusText: 'Service Unavailable',
           headers: new Headers({ 'content-type': 'application/json' }),
-          json: async () => ({
+          json: vi.fn().mockResolvedValue({
             error: {
               code: 'SERVICE_UNAVAILABLE',
               message: 'Service temporarily unavailable',
@@ -198,7 +211,7 @@ describe('MsGineClient', () => {
           ok: true,
           status: 200,
           headers: new Headers({ 'content-type': 'application/json' }),
-          json: async () => ({
+          json: vi.fn().mockResolvedValue({
             id: 'msg_123',
             sid: null,
             channel: 'sms',
