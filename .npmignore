@@ -1,0 +1,44 @@
+# Source files
+src/
+*.test.ts
+*.test.js
+
+# Configuration files
+tsconfig.json
+vitest.config.ts
+.eslintrc.js
+.prettierrc
+
+# Development files
+.env
+.env.example
+examples/
+CONTRIBUTING.md
+SETUP.md
+
+# Build artifacts
+*.tsbuildinfo
+coverage/
+
+# Version control
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# CI/CD
+.github/
+
+# Documentation (keep README and LICENSE)
+# README.md - included
+# LICENSE - included
+# CHANGELOG.md - included
+
+# Package manager
+node_modules/
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+.pnpm-store/
