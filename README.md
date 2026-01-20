@@ -1,5 +1,7 @@
 # @msgine/sdk
 
+![npm](https://img.shields.io/npm/v/@msgine/sdk?color=brightgreen&label=npm)
+
 Official TypeScript SDK for the MsGine Messaging API. 
 
 ## Features
@@ -129,12 +131,13 @@ Then use it in your code:
 
 ```typescript
 import { MsGineClient } from '@msgine/sdk';
-import * as dotenv from 'dotenv';
+import {loadEnv} from "dotenv-gad";
+import schema from "./env.schema"
 
-dotenv.config();
+env = loadEnv(schema)
 
 const client = new MsGineClient({
-  apiToken: process.env.MSGINE_API_TOKEN!,
+  apiToken: env.MSGINE_API_TOKEN!,
 });
 ```
 
@@ -148,7 +151,7 @@ import {
 } from '@msgine/sdk';
 
 const client = new MsGineClient({
-  apiToken: process.env.MSGINE_API_TOKEN!,
+  apiToken: env.MSGINE_API_TOKEN!,
 });
 
 try {
@@ -189,7 +192,7 @@ const customFetch = async (url: string, options: RequestInit) => {
 };
 
 const client = new MsGineClient({
-  apiToken: process.env.MSGINE_API_TOKEN!,
+  apiToken: env.MSGINE_API_TOKEN!,
   fetch: customFetch,
 });
 ```
@@ -200,7 +203,7 @@ const client = new MsGineClient({
 import { createClient } from '@msgine/sdk';
 
 const client = createClient({
-  apiToken: process.env.MSGINE_API_TOKEN!,
+  apiToken: env.MSGINE_API_TOKEN!,
 });
 
 await client.sendSms({
