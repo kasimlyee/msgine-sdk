@@ -1,6 +1,7 @@
 {
   "name": "@msgine/sdk",
    "description": "Official TypeScript SDK for MsGine Messaging API",
+   "version": "1.0.0",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -47,7 +48,7 @@
   "bugs": {
     "url": "https://github.com/kasimlyee/msgine-sdk/issues"
   },
-  "homepage": "https://github.com/kasimlyee/msgine-sdk#readme",
+  "homepage": "https://msgine.net",
   "devDependencies": {
     "@types/node": "^20.10.5",
     "@typescript-eslint/eslint-plugin": "^6.15.0",

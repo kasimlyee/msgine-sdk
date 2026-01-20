@@ -4,14 +4,15 @@ import {
   MsGineValidationError,
   MessageStatus,
 } from '@msgine/sdk';
-import * as dotenv from 'dotenv';
+import {loadEnv} from "dotenv-gad"
+import schema from "./env.schema"
 
-dotenv.config();
+const env = loadEnv(schema)
 
 async function main() {
   // Create client with custom configuration
   const client = new MsGineClient({
-    apiToken: process.env.MSGINE_API_TOKEN!,
+    apiToken: env.MSGINE_API_TOKEN,
     timeout: 60000, // 60 seconds
     retry: {
       maxRetries: 5,
@@ -118,7 +119,7 @@ async function main() {
   // Example 5: Custom retry behavior
   console.log('\n=== Example 5: Custom Retry Configuration ===');
   const clientWithRetry = new MsGineClient({
-    apiToken: process.env.MSGINE_API_TOKEN!,
+    apiToken: env.MSGINE_API_TOKEN,
     retry: {
       maxRetries: 2,
       initialDelay: 500,

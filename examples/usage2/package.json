@@ -9,11 +9,12 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-   "devDependencies": {
+  "devDependencies": {
     "dotenv": "^17.2.3",
     "tsx": "^4.20.6"
   },
   "dependencies": {
-    "@msgine/sdk": "link:..\\.."
+    "@msgine/sdk": "link:..\\..",
+    "dotenv-gad": "^1.2.2"
   }
 }

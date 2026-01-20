@@ -1,13 +1,14 @@
 import { MsGineClient } from '@msgine/sdk';
-import * as dotenv from 'dotenv';
+import {loadEnv} from "dotenv-gad"
+import schema from "./env.schema"
 
 // Load environment variables
-dotenv.config();
+const env = loadEnv(schema)
 
 async function main() {
   // Create client
   const client = new MsGineClient({
-    apiToken: process.env.MSGINE_API_TOKEN!,
+    apiToken: env.MSGINE_API_TOKEN,
   });
 
   try {
