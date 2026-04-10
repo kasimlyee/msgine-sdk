@@ -1,124 +1,64 @@
-import { FetchHttpClient } from './http-client';
-import {
-  HttpMethod,
-  MsGineClientConfig,
-  MsGineValidationError,
-  SendSmsPayload,
-  SendSmsResponse,
-  SendSmsSchema,
-} from './types';
+import { HttpClient } from './http-client';
+import { MsGineClientConfig } from './types';
+import { SmsModule } from './modules/sms';
+import { EmailModule } from './modules/email';
+import { PushModule } from './modules/push';
+import { AnalyticsModule } from './modules/analytics';
+import { MessagesModule } from './modules/messages';
 
 /**
- * Main MsGine SDK client
+ * MsGine API client.
+ *
+ * Instantiate once and reuse across your application.
  *
  * @example
  * ```typescript
- * const client = new MsGineClient({
- *   apiToken: process.env.MSGINE_API_TOKEN!
+ * import { MsGineClient } from '@msgine/sdk';
+ *
+ * const client = new MsGineClient({ apiKey: process.env.MSGINE_API_KEY! });
+ *
+ * // SMS
+ * await client.sms.send({ to: '+256701234567', message: 'Hello!' });
+ *
+ * // Email
+ * await client.email.send({
+ *   from: 'no-reply@mail.msgine.net',
+ *   to: 'user@example.com',
+ *   subject: 'Welcome',
+ *   html: '<h1>Hello</h1>',
  * });
  *
- * const result = await client.sendSms({
- *   to: '+256701521269',
- *   message: 'Hello from MsGine!'
- * });
+ * // Push
+ * await client.push.registerDevice({ token: fcmToken, platform: 'web' });
+ * await client.push.send({ title: 'Hey!', body: 'New message arrived.' });
+ *
+ * // Analytics
+ * const stats = await client.analytics.overview({ from: '2026-01-01' });
  * ```
  */
 export class MsGineClient {
-  private readonly httpClient: FetchHttpClient;
+  /** Send SMS messages and retrieve history */
+  readonly sms: SmsModule;
+  /** Send emails and retrieve history */
+  readonly email: EmailModule;
+  /** Send push notifications, manage device tokens, retrieve history */
+  readonly push: PushModule;
+  /** Channel analytics — overview and per-day breakdown */
+  readonly analytics: AnalyticsModule;
+  /** Look up any message by ID across all channels */
+  readonly messages: MessagesModule;
 
-  /**
-   * Create a new MsGine client
-   *
-   * @param config - Client configuration
-   * @throws {Error} If API token is not provided
-   */
   constructor(config: MsGineClientConfig) {
-    this.httpClient = new FetchHttpClient(config);
-  }
-
-  /**
-   * Send an SMS message
-   *
-   * @param payload - SMS message data
-   * @returns Promise resolving to the SMS response
-   * @throws {MsGineValidationError} If payload validation fails
-   * @throws {MsGineError} If the API request fails
-   *
-   * @example
-   * ```typescript
-   * const result = await client.sendSms({
-   *   to: '+256701521269',
-   *   message: 'Hello World!'
-   * });
-   *
-   * console.log('Message ID:', result.messageId);
-   * console.log('Status:', result.status);
-   * ```
-   */
-  async sendSms(payload: SendSmsPayload): Promise<SendSmsResponse> {
-    // Validate payload
-    const validation = SendSmsSchema.safeParse(payload);
-
-    if (!validation.success) {
-      throw new MsGineValidationError('Invalid SMS payload', validation.error);
-    }
-
-    // Send request
-    return this.httpClient.request<SendSmsResponse, SendSmsPayload>({
-      method: HttpMethod.POST,
-      path: '/messages/sms',
-      body: validation.data,
-    });
-  }
-
-  /**
-   * Send multiple SMS messages in batch
-   *
-   * @param payloads - Array of SMS message data
-   * @returns Promise resolving to array of SMS responses
-   * @throws {MsGineValidationError} If any payload validation fails
-   * @throws {MsGineError} If any API request fails
-   *
-   * @example
-   * ```typescript
-   * const results = await client.sendSmsBatch([
-   *   { to: '+256701521269', message: 'Hello!' },
-   *   { to: '+256701521270', message: 'Hi there!' }
-   * ]);
-   * ```
-   */
-  async sendSmsBatch(payloads: SendSmsPayload[]): Promise<SendSmsResponse[]> {
-    // Validate all payloads first
-    const validations = payloads.map((payload) =>
-      SendSmsSchema.safeParse(payload)
-    );
-
-    const invalidPayload = validations.find((v) => !v.success);
-    if (invalidPayload && !invalidPayload.success) {
-      throw new MsGineValidationError(
-        'Invalid SMS payload in batch',
-        invalidPayload.error
-      );
-    }
-
-    // Send all messages
-    return Promise.all(payloads.map((payload) => this.sendSms(payload)));
+    const http = new HttpClient(config);
+    this.sms = new SmsModule(http);
+    this.email = new EmailModule(http);
+    this.push = new PushModule(http);
+    this.analytics = new AnalyticsModule(http);
+    this.messages = new MessagesModule(http);
   }
 }
 
-/**
- * Create a new MsGine client instance
- *
- * @param config - Client configuration
- * @returns New MsGine client instance
- *
- * @example
- * ```typescript
- * const client = createClient({
- *   apiToken: process.env.MSGINE_API_TOKEN!
- * });
- * ```
- */
+/** Convenience factory — equivalent to `new MsGineClient(config)`. */
 export function createClient(config: MsGineClientConfig): MsGineClient {
   return new MsGineClient(config);
 }

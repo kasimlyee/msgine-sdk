@@ -2,17 +2,15 @@
 
 ![npm](https://img.shields.io/npm/v/@msgine/sdk?color=brightgreen&label=npm)
 
-Official TypeScript SDK for the MsGine Messaging API. 
+Official TypeScript SDK for the MsGine Messaging API.
 
 ## Features
 
 - **Fully Typed**: Complete TypeScript support with strict typing
-- **Auto Retry**: Configurable retry logic with exponential backoff
-- **Validation**: Runtime validation using Zod schemas
+- **Multi-Channel**: SMS, Email, and Push notifications
+- **Validation**: Runtime input validation before API calls
+- **Analytics**: Built-in analytics and message history access
 - **Modern**: Built with latest TypeScript and ES modules
-- **Well Tested**: Comprehensive test coverage
-- **Zero Config**: Sensible defaults, easy to customize
-- **Flexible**: Support for custom fetch implementations
 
 ## Installation
 
@@ -32,13 +30,12 @@ yarn add @msgine/sdk
 ```typescript
 import { MsGineClient } from '@msgine/sdk';
 
-// Create a client
 const client = new MsGineClient({
-  apiToken: process.env.MSGINE_API_TOKEN!,
+  apiKey: process.env.MSGINE_API_KEY!,
 });
 
 // Send an SMS
-const result = await client.sendSms({
+const result = await client.sms.send({
   to: '+256701521269',
   message: 'Hello from MsGine!',
 });
@@ -49,99 +46,101 @@ console.log('Status:', result.status);
 
 ## Configuration
 
-### Basic Configuration
-
 ```typescript
 const client = new MsGineClient({
-  apiToken: 'your-api-token',
+  apiKey: 'your-api-key',                        // Required
+  baseUrl: 'https://api.msgine.net/api/v1',      // Optional: custom API URL
 });
 ```
 
-### Advanced Configuration
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `apiKey` | `string` | Yes | Your MsGine API key |
+| `baseUrl` | `string` | No | Custom API base URL |
+
+## Usage
+
+### Send an SMS
 
 ```typescript
-const client = new MsGineClient({
-  apiToken: 'your-api-token',
-  baseUrl: 'https://api.msgine.net/api/v1', // Optional: Custom API URL
-  timeout: 30000, // Optional: Request timeout in ms (default: 30000)
-  retry: {
-    maxRetries: 3, // Optional: Max retry attempts (default: 3)
-    initialDelay: 1000, // Optional: Initial delay in ms (default: 1000)
-    maxDelay: 10000, // Optional: Max delay in ms (default: 10000)
-    backoffMultiplier: 2, // Optional: Backoff multiplier (default: 2)
-    retryableStatusCodes: [408, 429, 500, 502, 503, 504], // Optional
-  },
+const result = await client.sms.send({
+  to: '+256701521269',
+  message: 'Your verification code is 123456',
+});
+
+console.log('Message ID:', result.id);
+console.log('Status:', result.status);
+console.log('Cost:', result.cost, result.currency); // e.g., 30 UGX
+```
+
+### Send to Multiple Recipients
+
+```typescript
+const result = await client.sms.send({
+  to: ['+256701521269', '+256701234567', '+256709876543'],
+  message: 'System maintenance tonight at 10 PM',
+});
+
+console.log('Sent to:', result.to.length, 'recipients');
+```
+
+### Custom Sender ID
+
+```typescript
+const result = await client.sms.send({
+  to: '+256701521269',
+  from: 'MyApp',          // Max 11 alphanumeric characters
+  message: 'Hello from MyApp!',
 });
 ```
 
-## Usage Examples
-
-### Send a Single SMS
+### Delivery Callback
 
 ```typescript
-try {
-  const result = await client.sendSms({
-    to: '+256701521269',
-    message: 'Your verification code is 123456',
-  });
-
-  console.log('Message ID:', result.id);
-  console.log('Status:', result.status);
-  console.log('Recipients:', result.to);
-  console.log('Cost:', result.cost, result.currency);
-  console.log('Timestamp:', result.createdAt);
-} catch (error) {
-  if (error instanceof MsGineError) {
-    console.error('API Error:', error.message);
-    console.error('Status Code:', error.statusCode);
-    console.error('Error Code:', error.code);
-  }
-}
-```
-
-### Send Multiple SMS (Batch)
-
-```typescript
-const messages = [
-  { to: '+256701521269', message: 'Hello Alice!' },
-  { to: '+256701521270', message: 'Hello Bob!' },
-  { to: '+256701521271', message: 'Hello Charlie!' },
-];
-
-try {
-  const results = await client.sendSmsBatch(messages);
-  
-  results.forEach((result, index) => {
-    console.log(`Message ${index + 1}:`, result.id);
-  });
-} catch (error) {
-  console.error('Failed to send batch:', error);
-}
-```
-
-### Using Environment Variables
-
-Create a `.env` file:
-
-```env
-MSGINE_API_TOKEN=your-api-token-here
-```
-
-Then use it in your code:
-
-```typescript
-import { MsGineClient } from '@msgine/sdk';
-import {loadEnv} from "dotenv-gad";
-import schema from "./env.schema"
-
-env = loadEnv(schema)
-
-const client = new MsGineClient({
-  apiToken: env.MSGINE_API_TOKEN!,
+const result = await client.sms.send({
+  to: '+256701521269',
+  message: 'Hello!',
+  callbackUrl: 'https://your-app.com/webhooks/msgine',
 });
 ```
 
-### Error Handling
+### Send Email
+
+```typescript
+const result = await client.email.send({
+  to: 'user@example.com',
+  subject: 'Welcome to our service',
+  body: 'Thank you for signing up!',
+});
+```
+
+### Send Push Notification
+
+```typescript
+const result = await client.push.send({
+  to: 'device-token',
+  title: 'New message',
+  body: 'You have a new notification',
+});
+```
+
+### View Message History
+
+```typescript
+const history = await client.sms.getHistory();
+console.log('Messages:', history);
+```
+
+### View Analytics
+
+```typescript
+const overview = await client.analytics.overview();
+const daily = await client.analytics.daily();
+
+console.log('Total sent:', overview.totalSent);
+```
+
+## Error Handling
 
 ```typescript
 import {
@@ -151,132 +150,93 @@ import {
 } from '@msgine/sdk';
 
 const client = new MsGineClient({
-  apiToken: env.MSGINE_API_TOKEN!,
+  apiKey: process.env.MSGINE_API_KEY!,
 });
 
 try {
-  const result = await client.sendSms({
+  const result = await client.sms.send({
     to: '+256701521269',
     message: 'Hello!',
   });
-  console.log('Success:', result);
+  console.log('Success:', result.id);
 } catch (error) {
   if (error instanceof MsGineValidationError) {
-    // Handle validation errors
+    // Input failed validation before reaching the API
     console.error('Validation failed:', error.message);
-    console.error('Details:', error.errors.issues);
+    if (error.field) {
+      console.error('Field:', error.field);
+    }
   } else if (error instanceof MsGineError) {
-    // Handle API errors
+    // API returned an error response
     console.error('API error:', error.message);
     console.error('Status:', error.statusCode);
     console.error('Code:', error.code);
-    console.error('Request ID:', error.requestId);
   } else {
-    // Handle other errors
     console.error('Unexpected error:', error);
   }
 }
 ```
 
-### Custom Fetch Implementation
-
-Useful for testing or custom network handling:
-
-```typescript
-import { MsGineClient } from '@msgine/sdk';
-
-const customFetch = async (url: string, options: RequestInit) => {
-  // Add custom headers, logging, etc.
-  console.log('Making request to:', url);
-  return fetch(url, options);
-};
-
-const client = new MsGineClient({
-  apiToken: env.MSGINE_API_TOKEN!,
-  fetch: customFetch,
-});
-```
-
-### Using the Factory Function
-
-```typescript
-import { createClient } from '@msgine/sdk';
-
-const client = createClient({
-  apiToken: env.MSGINE_API_TOKEN!,
-});
-
-await client.sendSms({
-  to: '+256701521269',
-  message: 'Hello!',
-});
-```
-
 ## API Reference
 
-### MsGineClient
+### `client.sms`
 
-#### Constructor
+#### `send(options): Promise<SendSmsResponse>`
 
-```typescript
-new MsGineClient(config: MsGineClientConfig)
-```
+Send an SMS message.
 
-#### Methods
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `to` | `string \| string[]` | Yes | Recipient phone number(s) in E.164 format |
+| `message` | `string` | Yes | Message content (max 1000 characters) |
+| `from` | `string` | No | Sender ID (max 11 alphanumeric characters) |
+| `callbackUrl` | `string` | No | Webhook URL for delivery status updates |
 
-##### `sendSms(payload: SendSmsPayload): Promise<SendSmsResponse>`
+#### `getHistory(): Promise<...>`
 
-Send a single SMS message.
+Retrieve SMS message history.
 
-**Parameters:**
-- `payload.to` (string): Recipient phone number (required)
-- `payload.message` (string): Message content, max 1600 characters (required)
+### `client.email`
 
-**Returns:** `Promise<SendSmsResponse>`
+#### `send(options): Promise<...>`
 
-**Throws:**
-- `MsGineValidationError`: If payload validation fails
-- `MsGineError`: If the API request fails
+Send an email message.
 
-##### `sendSmsBatch(payloads: SendSmsPayload[]): Promise<SendSmsResponse[]>`
+### `client.push`
 
-Send multiple SMS messages.
+#### `send(options): Promise<...>`
 
-**Parameters:**
-- `payloads` (SendSmsPayload[]): Array of SMS payloads
+Send a push notification.
 
-**Returns:** `Promise<SendSmsResponse[]>`
+### `client.analytics`
 
-**Throws:**
-- `MsGineValidationError`: If any payload validation fails
-- `MsGineError`: If any API request fails
+#### `overview(): Promise<...>`
 
-### Types
+Get a messaging analytics overview.
 
-#### `MsGineClientConfig`
+#### `daily(): Promise<...>`
+
+Get daily analytics breakdown.
+
+### `client.messages`
+
+Access and retrieve message records.
+
+## Types
 
 ```typescript
 interface MsGineClientConfig {
-  apiToken: string;
+  apiKey: string;
   baseUrl?: string;
-  timeout?: number;
-  fetch?: typeof fetch;
-  retry?: RetryConfig;
 }
-```
 
-#### `SendSmsPayload`
-
-```typescript
-interface SendSmsPayload {
-  to: string;
-  message: string;
+interface SendSmsOptions {
+  to: string | string[];
+  message: string;       // max 1000 characters
+  from?: string;         // max 11 characters
+  callbackUrl?: string;
 }
-```
 
-#### `SendSmsResponse`
-
-```typescript
 interface SendSmsResponse {
   id: string;
   sid: string | null;
@@ -284,53 +244,21 @@ interface SendSmsResponse {
   to: string[];
   from: string;
   content: string;
-  status: MessageStatus;
+  status: 'pending' | 'sent' | 'delivered' | 'failed';
   cost: number;
-  currency: string;
+  currency: string;      // e.g., "UGX"
   createdAt: string;
   updatedAt?: string;
 }
 ```
 
-#### `MessageStatus`
-
-```typescript
-enum MessageStatus {
-  PENDING = 'pending',
-  SENT = 'sent',
-  DELIVERED = 'delivered',
-  FAILED = 'failed',
-}
-```
-
 ## Development
 
-### Setup
-
 ```bash
-# Install dependencies
-pnpm install
-
-# Run tests
-pnpm test
-
-# Run tests in watch mode
-pnpm test:watch
-
-# Run tests with coverage
-pnpm test:coverage
-
-# Type checking
-pnpm typecheck
-
-# Linting
-pnpm lint
-
-# Format code
-pnpm format
-
-# Build
-pnpm build
+pnpm install      # Install dependencies
+pnpm test         # Run tests
+pnpm typecheck    # Type checking
+pnpm build        # Build
 ```
 
 ### Project Structure
@@ -338,73 +266,57 @@ pnpm build
 ```
 msgine-sdk/
 ├── src/
-│   ├── index.ts          # Main entry point
-│   ├── client.ts         # MsGine client implementation
-│   ├── http-client.ts    # HTTP client with retry logic
-│   ├── types.ts          # Type definitions
-│   └── client.test.ts    # Tests
-├── dist/                 # Built files (generated)
+│   ├── index.ts           # Main entry point
+│   ├── client.ts          # MsGineClient implementation
+│   ├── http-client.ts     # HTTP transport layer
+│   ├── types.ts           # TypeScript type definitions
+│   └── modules/
+│       ├── sms.ts         # SMS module
+│       ├── email.ts       # Email module
+│       ├── push.ts        # Push notification module
+│       ├── analytics.ts   # Analytics module
+│       └── messages.ts    # Messages module
+├── dist/                  # Built files (generated)
 ├── package.json
 ├── tsconfig.json
-├── vitest.config.ts
 └── README.md
 ```
 
 ## Best Practices
 
-### 1. Store API Token Securely
+### Store API Keys Securely
 
-Never hardcode your API token. Use environment variables:
+Never hardcode your API key. Use environment variables:
 
 ```typescript
 const client = new MsGineClient({
-  apiToken: process.env.MSGINE_API_TOKEN!,
+  apiKey: process.env.MSGINE_API_KEY!,
 });
 ```
 
-### 2. Handle Errors Gracefully
-
-Always wrap API calls in try-catch blocks:
+### Always Handle Errors
 
 ```typescript
 try {
-  const result = await client.sendSms({ to, message });
-  // Handle success
+  const result = await client.sms.send({ to, message });
 } catch (error) {
-  // Handle error
+  // Handle error appropriately
 }
 ```
 
-### 3. Validate Input
-
-The SDK automatically validates input, but you can also use the schemas:
+### Send to Multiple Recipients Efficiently
 
 ```typescript
-import { SendSmsSchema } from '@msgine/sdk';
-
-const result = SendSmsSchema.safeParse({
-  to: '+256701521269',
-  message: 'Hello!',
+// ✅ Single request for multiple recipients
+await client.sms.send({
+  to: [phone1, phone2, phone3],
+  message: 'Hello everyone!',
 });
 
-if (!result.success) {
-  console.error('Validation errors:', result.error);
+// ❌ Avoid: one request per recipient
+for (const phone of phones) {
+  await client.sms.send({ to: phone, message: 'Hello!' });
 }
-```
-
-### 4. Use TypeScript
-
-Take advantage of full type safety:
-
-```typescript
-const client = new MsGineClient({ apiToken: 'token' });
-
-// TypeScript will catch errors at compile time
-await client.sendSms({
-  to: '+256701521269',
-  message: 'Hello!',
-  // invalidField: 'error' // ❌ TypeScript error
-});
 ```
 
 ## License
@@ -413,7 +325,6 @@ MIT
 
 ## Support
 
-For issues and questions:
-- GitHub Issues: [github.com/kasimlyee/msgine-sdk](https://github.com/kasimlyee/msgine-sdk)
 - Documentation: [docs.msgine.net](https://docs.msgine.net)
 - Email: support@msgine.net
+- GitHub Issues: [github.com/kasimlyee/msgine-sdk](https://github.com/kasimlyee/msgine-sdk)

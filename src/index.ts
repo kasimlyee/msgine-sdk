@@ -1,29 +1,53 @@
 /**
- * MsGine SDK - Official TypeScript SDK for MsGine Messaging API
+ * @msgine/sdk — Official SDK for the MsGine Messaging API
  *
- * @packageDocumentation
+ * Supports: SMS · Email · Push Notifications · Analytics
+ *
+ * @example
+ * ```typescript
+ * import { MsGineClient } from '@msgine/sdk';
+ *
+ * const client = new MsGineClient({ apiKey: process.env.MSGINE_API_KEY! });
+ * await client.sms.send({ to: '+256701234567', message: 'Hello from MsGine!' });
+ * ```
  */
 
-// Export main client
 export { MsGineClient, createClient } from './client';
 
-// Export types
 export type {
+  // Config
   MsGineClientConfig,
   RetryConfig,
-  SendSmsPayload,
-  SendSmsResponse,
-  ApiResponse,
-  ApiErrorResponse,
-  HttpClient,
-  RequestOptions,
+  // Primitives
+  MessageStatus,
+  DevicePlatform,
+  Currency,
+  PaginationOptions,
+  PaginatedResult,
+  MessageRecord,
+  // SMS
+  SendSmsOptions,
+  SmsMessage,
+  SmsHistoryResult,
+  // Email
+  SendEmailOptions,
+  EmailMessage,
+  EmailHistoryResult,
+  // Push
+  SendPushOptions,
+  PushMessage,
+  PushHistoryResult,
+  RegisterDeviceOptions,
+  RemoveDeviceOptions,
+  DeviceRegistration,
+  // Analytics
+  AnalyticsOverviewOptions,
+  AnalyticsOverview,
+  AnalyticsDailyOptions,
+  AnalyticsDaily,
+  DailyDataPoint,
+  ChannelStats,
+  PushStats,
 } from './types';
 
-// Export enums
-export { MessageStatus, HttpMethod } from './types';
-
-// Export errors
 export { MsGineError, MsGineValidationError } from './types';
-
-// Export schemas for runtime validation
-export { SendSmsSchema } from './types';
